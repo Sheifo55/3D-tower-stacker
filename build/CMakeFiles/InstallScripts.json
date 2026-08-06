@@ -1,0 +1,11 @@
+{
+	"InstallScripts" : 
+	[
+		"D:/collage/Summer 2/Graphics/build/cmake_install.cmake",
+		"D:/collage/Summer 2/Graphics/build/_deps/glfw-build/cmake_install.cmake",
+		"D:/collage/Summer 2/Graphics/build/_deps/glfw-build/src/cmake_install.cmake",
+		"D:/collage/Summer 2/Graphics/build/_deps/glm-build/cmake_install.cmake",
+		"D:/collage/Summer 2/Graphics/build/_deps/glm-build/glm/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
