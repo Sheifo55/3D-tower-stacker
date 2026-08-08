@@ -80,6 +80,11 @@ int main() {
 
     Game game;
     game.setCamera(&camera);
+    
+    unsigned int texWood = renderer.loadTexture("assets/textures/wood.png");
+    unsigned int texStone = renderer.loadTexture("assets/textures/stone.png");
+    game.setTextures(texWood, texStone);
+
     // Note: the game state starts at START_SCREEN but does not auto-initialize blocks until startGame()
     // It is safe to just let it run. However, the first block is added in init(). Wait, game.init() is called on start.
 

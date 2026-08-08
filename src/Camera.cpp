@@ -7,12 +7,14 @@ Camera::Camera(float fov, float aspect, float nearP, float farP)
       lookOffset(-8.0f, -10.0f, -8.0f),
       currentY(0.0f),
       targetY(0.0f),
-      lerpSpeed(5.0f)
+      lerpSpeed(5.0f),
+      orbitAngle(45.0f), // Start at 45 degrees
+      orbitSpeed(10.0f) // 10 degrees per second
 {
 }
 
 glm::mat4 Camera::getViewMatrix() const {
-    glm::vec3 currentPos = glm::vec3(position.x, position.y + currentY, position.z);
+    glm::vec3 currentPos = getPosition();
     glm::vec3 lookAtPoint = glm::vec3(0.0f, currentY, 0.0f);
     return glm::lookAt(currentPos, lookAtPoint, glm::vec3(0.0f, 1.0f, 0.0f));
 }
@@ -22,7 +24,11 @@ glm::mat4 Camera::getProjectionMatrix() const {
 }
 
 glm::vec3 Camera::getPosition() const {
-    return glm::vec3(position.x, position.y + currentY, position.z);
+    float rad = glm::radians(orbitAngle);
+    float radius = 11.3137f; // sqrt(8^2 + 8^2) roughly 11.3
+    float x = sin(rad) * radius;
+    float z = cos(rad) * radius;
+    return glm::vec3(x, position.y + currentY, z);
 }
 
 void Camera::setTargetY(float y) {
@@ -31,6 +37,7 @@ void Camera::setTargetY(float y) {
 
 void Camera::update(float deltaTime) {
     currentY += (targetY - currentY) * lerpSpeed * deltaTime;
+    orbitAngle += orbitSpeed * deltaTime;
 }
 
 void Camera::setAspectRatio(float aspect) {

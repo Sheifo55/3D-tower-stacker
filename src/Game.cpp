@@ -17,20 +17,26 @@ glm::vec3 hsv2rgb(glm::vec3 c) {
 }
 
 Game::Game() : state(GameState::START_SCREEN), score(0), blockHeight(0.3f),
-               oscillationTime(0.0f), oscillationSpeed(2.0f), oscillationAmplitude(3.0f),
-               movingAlongX(true), camera(nullptr) {}
+               totalTime(0.0f), oscillationTime(0.0f), oscillationSpeed(2.0f), oscillationAmplitude(3.0f),
+               movingAlongX(true), camera(nullptr), texWood(0), texStone(0) {}
+
+void Game::setTextures(unsigned int wood, unsigned int stone) {
+    texWood = wood;
+    texStone = stone;
+}
 
 void Game::init() {
     towerBlocks.clear();
     scrapPieces.clear();
     score = 0;
     oscillationSpeed = 2.0f;
+    totalTime = 0.0f;
     
     // Add base foundation block
     Block baseBlock;
     baseBlock.position = glm::vec3(0.0f, 0.0f, 0.0f);
     baseBlock.size = glm::vec3(3.0f, blockHeight, 3.0f);
-    baseBlock.color = glm::vec3(0.25f, 0.28f, 0.35f);
+    baseBlock.color = glm::vec3(0.8f, 0.8f, 0.8f); // Lighter for stone texture
     towerBlocks.push_back(baseBlock);
     
     movingAlongX = true;
@@ -70,6 +76,7 @@ void Game::spawnNextBlock() {
 }
 
 void Game::update(float deltaTime) {
+    totalTime += deltaTime;
     if (state == GameState::PLAYING) {
         updateOscillation(deltaTime);
     }
@@ -196,8 +203,10 @@ void Game::handleInput() {
 void Game::render(const Renderer& renderer, Shader& shader, TextRenderer& textRenderer, Shader& textShader, int screenWidth, int screenHeight) {
     shader.use();
     
-    // Set global light uniforms
-    shader.setVec3("lightDir", glm::normalize(glm::vec3(1.0f, 1.0f, 0.5f)));
+    // Animate light circling the scene
+    float lightX = sin(totalTime * 0.5f) * 1.5f;
+    float lightZ = cos(totalTime * 0.5f) * 1.5f;
+    shader.setVec3("lightDir", glm::normalize(glm::vec3(lightX, 1.0f, lightZ)));
     shader.setVec3("lightColor", glm::vec3(1.0f, 0.95f, 0.9f));
     
     if (camera) {
@@ -206,8 +215,8 @@ void Game::render(const Renderer& renderer, Shader& shader, TextRenderer& textRe
 
     // Render tower blocks (default material)
     shader.setFloat("ambientStrength", 0.32f);
-    shader.setFloat("specularStrength", 0.55f);
-    shader.setFloat("shininess", 32.0f);
+    shader.setFloat("specularStrength", 0.8f); // Increased for better visibility
+    shader.setFloat("shininess", 64.0f);
 
     for (size_t i = 0; i < towerBlocks.size(); ++i) {
         // Frustum culling: don't render blocks far below the camera
@@ -216,25 +225,25 @@ void Game::render(const Renderer& renderer, Shader& shader, TextRenderer& textRe
         }
 
         if (i == 0) {
-            // Base platform material
-            shader.setFloat("ambientStrength", 0.35f);
-            shader.setFloat("specularStrength", 0.7f);
-            shader.setFloat("shininess", 48.0f);
+            // Base platform material - Stone
+            shader.setFloat("ambientStrength", 0.4f);
+            shader.setFloat("specularStrength", 0.5f);
+            shader.setFloat("shininess", 16.0f);
+            renderer.drawCylinder(shader, towerBlocks[i].getModelMatrix(), towerBlocks[i].color, true, texStone);
         } else {
-            // Reset to default material
-            shader.setFloat("ambientStrength", 0.32f);
-            shader.setFloat("specularStrength", 0.55f);
-            shader.setFloat("shininess", 32.0f);
+            // Reset to default material - Wood
+            shader.setFloat("ambientStrength", 0.4f);
+            shader.setFloat("specularStrength", 0.8f);
+            shader.setFloat("shininess", 64.0f);
+            
+            // Flash effect for perfect placement
+            glm::vec3 blockColor = towerBlocks[i].color;
+            if (towerBlocks[i].flashTimer > 0.0f) {
+                float flashAmount = towerBlocks[i].flashTimer / 0.5f;
+                blockColor = glm::mix(blockColor, glm::vec3(1.0f), flashAmount); // Blend towards white
+            }
+            renderer.drawCube(shader, towerBlocks[i].getModelMatrix(), blockColor, true, texWood);
         }
-        
-        // Flash effect for perfect placement
-        glm::vec3 blockColor = towerBlocks[i].color;
-        if (towerBlocks[i].flashTimer > 0.0f) {
-            float flashAmount = towerBlocks[i].flashTimer / 0.5f;
-            blockColor = glm::mix(blockColor, glm::vec3(1.0f), flashAmount); // Blend towards white
-        }
-
-        renderer.drawCube(shader, towerBlocks[i].getModelMatrix(), blockColor);
     }
     
     if (state == GameState::PLAYING) {
@@ -243,14 +252,14 @@ void Game::render(const Renderer& renderer, Shader& shader, TextRenderer& textRe
             float flashAmount = currentBlock.flashTimer / 0.5f;
             blockColor = glm::mix(blockColor, glm::vec3(1.0f), flashAmount);
         }
-        renderer.drawCube(shader, currentBlock.getModelMatrix(), blockColor);
+        renderer.drawCube(shader, currentBlock.getModelMatrix(), blockColor, true, texWood);
     }
     
     // Scrap pieces have reduced specular (more matte as they fall)
-    shader.setFloat("specularStrength", 0.1f);
-    shader.setFloat("shininess", 8.0f);
+    shader.setFloat("specularStrength", 0.3f);
+    shader.setFloat("shininess", 16.0f);
     for (const auto& scrap : scrapPieces) {
-        renderer.drawCube(shader, scrap.getModelMatrix(), scrap.color);
+        renderer.drawCube(shader, scrap.getModelMatrix(), scrap.color, true, texWood);
     }
 
     // HUD & Text Rendering

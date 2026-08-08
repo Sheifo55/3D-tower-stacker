@@ -26,10 +26,13 @@ public:
     GameState getState() const;
     int getScore() const;
     void setCamera(Camera* cam);
+    void setTextures(unsigned int wood, unsigned int stone);
 
 private:
     GameState state;
     int score;
+    unsigned int texWood;
+    unsigned int texStone;
 
     // Tower data
     std::vector<Block> towerBlocks;  // Placed blocks (bottom to top)
@@ -37,6 +40,7 @@ private:
     float blockHeight;                // Constant (e.g., 0.3f)
 
     // Oscillation
+    float totalTime;
     float oscillationTime;
     float oscillationSpeed;           // Increases with score
     float oscillationAmplitude;       // Range of movement (e.g., 3.0f)

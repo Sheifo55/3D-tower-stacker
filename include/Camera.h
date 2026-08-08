@@ -22,6 +22,8 @@ private:
     float currentY;
     float targetY;
     float lerpSpeed;
+    float orbitAngle;
+    float orbitSpeed;
 
     float fov, aspectRatio, nearPlane, farPlane;
 };
